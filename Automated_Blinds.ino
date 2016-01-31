@@ -22,8 +22,6 @@
 #include <Servo.h>
 #include <TMP36.h>
 
-// #define DEBUG_SERIAL
-
 // #define AREF_Voltage 5.0 
 #define AREF_Voltage 3.5
 
@@ -92,10 +90,6 @@ float convertLight (int reading, float refVolts)
 ////////////////////////////////////////////////////////////////////////
 void setup()
 {
-#ifdef DEBUG_SERIAL
-   Serial.begin (9600);
-#endif
-
    // attach the servo and center it to start.
    angleServo.attach (servoPin);
    motorAngle = SERVO_CENTER;
@@ -139,14 +133,6 @@ boolean Compute (float light, float theTemp)
          // if light is below the dark level, keep the blinds closed regardless.
          if ((light < DARK_LEVEL) || (theTemp > MAXIMUM_TEMPERATURE))
          {
-#ifdef DEBUG_SERIAL
-            Serial.print ("Close: ");
-            Serial.print (light);
-            Serial.print (" ");
-            Serial.print (theTemp);
-            Serial.print ("\n");
-#endif
-            
             actionNeeded = true;
             motorState = MOVING;
             motorDirection = CLOSED;
@@ -197,14 +183,6 @@ boolean Compute (float light, float theTemp)
          // close the blinds.
          if ((light > LIGHT_LEVEL) && (theTemp < MAXIMUM_TEMPERATURE))
          {
-#ifdef DEBUG_SERIAL
-            Serial.print ("Open: ");
-            Serial.print (light);
-            Serial.print (" ");
-            Serial.print (theTemp);
-            Serial.print ("\n");
-#endif
-            
             actionNeeded = true;
             motorState = MOVING;
             motorDirection = OPEN;
