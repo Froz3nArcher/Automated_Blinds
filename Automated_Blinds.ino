@@ -22,8 +22,8 @@
 #include <Servo.h>
 #include <TMP36.h>
 
-// #define AREF_Voltage 5.0 
-#define AREF_Voltage 3.5
+#define AREF_Voltage 5.0 
+// #define AREF_Voltage 3.5
 
 #define RUN_INTERVAL 50  // Run every 50 ms
 
@@ -49,6 +49,12 @@ const int servoPin = 9;  // Servo Library only supports pin 9 and 10
 Servo angleServo;
 int motorAngle = 0;
 
+const int onBoardLED = 13;
+
+// debug
+const int lightLED = 10;
+const int tempLED = 12;
+
 // constants used for state and action
 const int OPEN = 0;
 const int MOVING = 1;
@@ -70,19 +76,19 @@ float lightValue = 0.0;  // analog reading
 unsigned long previousTime = 0;
 unsigned long currentTime = 0;
 
-float DARK_LEVEL = ((500 / 1024.0) * AREF_Voltage);   // TBD level measured to determine darkness
-float LIGHT_LEVEL = ((600 / 1024.0) * AREF_Voltage);  // TBD level measured to determine enough light on sensor
+float DARK_LEVEL = ((450.0 / 1024.0) * AREF_Voltage);   // TBD level measured to determine darkness
+float LIGHT_LEVEL = ((650.0 / 1024.0) * AREF_Voltage);  // TBD level measured to determine enough light on sensor
 
-float MAXIMUM_TEMPERATURE = 30.0;
+float MAXIMUM_TEMPERATURE = 30.0;  // about 86 degrees F
 
 // Motor moves at SERVO_INTERVAL between these values.
-int SERVO_OPEN = 15;      // completely rotated counterclockwise, angles blinds down
+int SERVO_OPEN = 25;      // completely rotated counterclockwise, angles blinds down
 int SERVO_CENTER = 90;
-int SERVO_CLOSED = 160;  // completely rotated clockwise, angles blinds upwards
+int SERVO_CLOSED = 165;  // completely rotated clockwise, angles blinds upwards
 
 float convertLight (int reading, float refVolts)
 {
-   return ((reading / 1024.0) * refVolts);
+   return (((float) reading / 1024.0) * refVolts);
 }
    
 ////////////////////////////////////////////////////////////////////////
@@ -94,6 +100,9 @@ void setup()
    angleServo.attach (servoPin);
    motorAngle = SERVO_CENTER;
    angleServo.write (motorAngle);
+   pinMode (onBoardLED, OUTPUT);
+   pinMode (lightLED, OUTPUT);
+   pinMode (tempLED, OUTPUT);
    
 }
 
@@ -118,6 +127,12 @@ boolean Compute (float light, float theTemp)
             motorState = MOVING;
             motorDirection = CLOSED;
             angleServo.attach (servoPin);
+
+            if (light < DARK_LEVEL)
+               digitalWrite (lightLED, HIGH);
+            else
+               digitalWrite (tempLED, HIGH);
+            
          }
          else if ((light > LIGHT_LEVEL) && (theTemp < MAXIMUM_TEMPERATURE))
          {
@@ -125,6 +140,13 @@ boolean Compute (float light, float theTemp)
             motorState = MOVING;
             motorDirection = OPEN;
             angleServo.attach (servoPin);
+
+
+            if (light > LIGHT_LEVEL)
+               digitalWrite (lightLED, HIGH);
+            else
+               digitalWrite (tempLED, HIGH);
+            
          }
          break;
          
@@ -137,6 +159,13 @@ boolean Compute (float light, float theTemp)
             motorState = MOVING;
             motorDirection = CLOSED;
             angleServo.attach (servoPin);
+
+
+            if (light < DARK_LEVEL)
+               digitalWrite (lightLED, HIGH);
+            else
+               digitalWrite (tempLED, HIGH);
+            
          }
          break;
 
@@ -187,6 +216,13 @@ boolean Compute (float light, float theTemp)
             motorState = MOVING;
             motorDirection = OPEN;
             angleServo.attach (servoPin);
+
+
+            if (light > LIGHT_LEVEL)
+               digitalWrite (lightLED, HIGH);
+            else
+               digitalWrite (tempLED, HIGH);
+            
          }
          break;
    }
@@ -233,7 +269,11 @@ void loop()
          // complete the event before we go to sleep.
          if (!takeAction && (motorState != MOVING))
          {
+            digitalWrite (onBoardLED, LOW);
+            digitalWrite (lightLED, LOW);
+            digitalWrite (tempLED, LOW);
             LowPower.powerDown (SLEEP_8S, ADC_OFF, BOD_OFF);
+            digitalWrite (onBoardLED, HIGH);
          }
          
       } // currentTime > previousTime + RUN_INTERVAL
